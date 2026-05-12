@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, AlertCircle, Clock, MessageSquare, GraduationCap, FileText } from "lucide-react";
+import { ChevronLeft, AlertCircle, Loader2, Clock, MessageSquare, GraduationCap, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -240,7 +240,7 @@ export default function QuizPage() {
 
               <Button type="submit" className="w-full h-12 text-base mt-2" disabled={generateMutation.isPending}>
                 {generateMutation.isPending ? (
-                  <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4 animate-spin" />Generating…</span>
+                  <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Generating…</span>
                 ) : "Start Quiz"}
               </Button>
             </form>

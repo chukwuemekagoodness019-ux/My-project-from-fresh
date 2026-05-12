@@ -61,7 +61,7 @@ export function InputBar({ onSend, onUpload, disabled }: InputBarProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -378,7 +378,7 @@ export function InputBar({ onSend, onUpload, disabled }: InputBarProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={pendingFile ? "Add an instruction (optional)…" : "Ask a question…"}
+            placeholder={pendingFile ? "Add an instruction (optional)… (Enter to send)" : "Ask a question… (Enter to send, Shift+Enter for new line)"}
             className="min-h-[44px] max-h-32 bg-transparent border-0 focus-visible:ring-0 resize-none p-2.5 shadow-none text-base placeholder:text-muted-foreground/60"
             rows={1}
             disabled={disabled}

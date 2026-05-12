@@ -12,10 +12,6 @@ import { Link, useLocation } from "wouter";
 import { useChatHistory } from "@/hooks/use-chat-history";
 import type { ChatMessage } from "@/hooks/use-chat-history";
 import { usePaymentModal } from "@/hooks/use-payment-modal";
-import { useToast } from "@/hooks/use-toast";
-
-const QUIZ_KEYWORDS =
-  /\b(quiz|quizzes|practice questions?|test me|mcq|multiple choice|give me questions?|make.*questions?|create.*quiz|generate.*quiz|exam questions?)\b/i;
 
 const BASE = import.meta.env.BASE_URL as string;
 
@@ -25,7 +21,6 @@ export default function ChatPage() {
   const { currentConversation, addMessage, startNewChat, getCurrentIdRef } =
     useChatHistory();
   const paymentModal = usePaymentModal();
-  const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const [localError, setLocalError] = useState<string | null>(null);
@@ -156,15 +151,6 @@ export default function ChatPage() {
     const preMessages = currentConversation?.messages ?? [];
     const convId = addMessage(userMsg);
     setLocalError(null);
-
-    if (QUIZ_KEYWORDS.test(content)) {
-      toast({
-        title: "Want a real quiz?",
-        description:
-          "Head to the Quiz tab to set subject, difficulty, and timer. 🎯",
-      });
-    }
-
     void streamChat(buildHistory(preMessages, userMsg), convId, usedVoice);
   };
 

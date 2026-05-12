@@ -61,10 +61,17 @@ export function MessageList({
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const [voiceGender, setVoiceGender] = useState<VoiceGender>("default");
 
-  // Scroll to bottom when messages change, streaming updates, or pending changes
+  // Smooth scroll when a new message lands or pending state changes
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isPending, streamingMessage]);
+  }, [messages, isPending]);
+
+  // Instant scroll during token streaming (avoids jank on every delta)
+  useEffect(() => {
+    if (streamingMessage) {
+      bottomRef.current?.scrollIntoView({ behavior: "auto" });
+    }
+  }, [streamingMessage]);
 
   const handleTTS = (text: string, idx: number) => {
     if (!("speechSynthesis" in window)) return;
@@ -89,7 +96,10 @@ export function MessageList({
     };
 
     if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => setVoiceAndSpeak();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        setVoiceAndSpeak();
+      };
     } else {
       setVoiceAndSpeak();
     }
