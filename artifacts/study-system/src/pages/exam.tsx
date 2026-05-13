@@ -96,6 +96,7 @@ export default function ExamPage() {
 
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const answersRef = useRef<Record<string, string>>({});
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -111,7 +112,7 @@ export default function ExamPage() {
   const autoJoinAttemptedRef = useRef(false);
   const [autoJoining, setAutoJoining] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return !!(params.get("code") && params.get("key"));
+    return !!(params.get("code"));
   });
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
@@ -146,8 +147,8 @@ export default function ExamPage() {
     autoJoinAttemptedRef.current = true;
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    const key = params.get("key");
-    if (code && key) {
+    const key = params.get("key") || "";
+    if (code) {
       handleJoinExam(code, key);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -239,6 +240,7 @@ export default function ExamPage() {
 
       setActiveQuiz(quiz);
       setAnswers({});
+      answersRef.current = {};
       setHasSubmitted(false);
       setTabViolations(0);
       refetchMe();
@@ -263,14 +265,15 @@ export default function ExamPage() {
     }
   };
 
-  const handleJoinExam = async (code: string, key: string) => {
-    if (!code.trim() || !key.trim()) {
-      toast({ title: "Both exam code and access key are required.", variant: "destructive" });
+  const handleJoinExam = async (code: string, key: string = "") => {
+    if (!code.trim()) {
+      toast({ title: "Exam code is required.", variant: "destructive" });
       return;
     }
     setIsJoining(true);
+    const keyParam = key.trim() ? `?key=${encodeURIComponent(key.trim())}` : "";
     try {
-      const res = await fetch(`${BASE}api/exam/${encodeURIComponent(code.trim())}?key=${encodeURIComponent(key.trim())}`);
+      const res = await fetch(`${BASE}api/exam/${encodeURIComponent(code.trim())}${keyParam}`);
       if (res.status === 404) {
         toast({ title: "Exam not found or has expired. Check the code and try again.", variant: "destructive" });
         setAutoJoining(false);
@@ -295,6 +298,7 @@ export default function ExamPage() {
       }
       setActiveQuiz(quiz);
       setAnswers({});
+      answersRef.current = {};
       setHasSubmitted(false);
       setTabViolations(0);
       setState("running");
@@ -332,7 +336,7 @@ export default function ExamPage() {
           difficulty: quiz.difficulty,
           questionType: quiz.questionType,
           questions: quiz.questions,
-          answers: Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer })),
+          answers: Object.entries(answersRef.current).map(([questionId, answer]) => ({ questionId, answer })),
         }),
       });
 
@@ -563,20 +567,16 @@ export default function ExamPage() {
               <div className="p-6 bg-card rounded-xl border border-border shadow-sm space-y-4">
                 <div className="space-y-1">
                   <h2 className="font-semibold">Join a Shared Exam</h2>
-                  <p className="text-sm text-muted-foreground">Enter the exam code and access key provided by the exam creator.</p>
+                  <p className="text-sm text-muted-foreground">Enter the exam code provided by the exam creator.</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Exam Code</Label>
                   <Input placeholder="e.g. a3f8c2b1d4e9..." value={joinCode} onChange={(e) => setJoinCode(e.target.value)} className="h-11 font-mono" />
                 </div>
-                <div className="space-y-2">
-                  <Label>Access Key</Label>
-                  <Input placeholder="e.g. 9f4a2c8b..." value={joinKey} onChange={(e) => setJoinKey(e.target.value)} className="h-11 font-mono" />
-                </div>
                 <Button
                   className="w-full h-12 text-base"
-                  disabled={isJoining || !joinCode.trim() || !joinKey.trim()}
-                  onClick={() => handleJoinExam(joinCode, joinKey)}
+                  disabled={isJoining || !joinCode.trim()}
+                  onClick={() => handleJoinExam(joinCode)}
                 >
                   {isJoining ? "Joining Exam…" : "Join Exam"}
                 </Button>
@@ -820,14 +820,14 @@ export default function ExamPage() {
                         <button
                           key={oi}
                           className={`w-full text-left p-3 rounded-lg border text-sm transition-all ${answers[q.id] === opt ? "bg-primary/10 border-primary font-medium ring-1 ring-primary/30" : "bg-background border-border hover:border-primary/40 hover:bg-accent/50"}`}
-                          onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt }))}
+                          onClick={() => { const next = { ...answersRef.current, [q.id]: opt }; answersRef.current = next; setAnswers(next); }}
                         >
                           <span className="text-muted-foreground font-mono mr-2 text-xs">{String.fromCharCode(65 + oi)}.</span>{opt}
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <Textarea className="min-h-[90px] text-sm p-3 ml-10" placeholder="Type your answer here…" value={answers[q.id] || ""} onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))} />
+                    <Textarea className="min-h-[90px] text-sm p-3 ml-10" placeholder="Type your answer here…" value={answers[q.id] || ""} onChange={(e) => { const next = { ...answersRef.current, [q.id]: e.target.value }; answersRef.current = next; setAnswers(next); }} />
                   )}
                 </div>
               ))}

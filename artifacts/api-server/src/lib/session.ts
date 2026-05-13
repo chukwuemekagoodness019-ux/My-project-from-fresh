@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import crypto from "node:crypto";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
-const COOKIE_NAME = "ss_session";
+export const COOKIE_NAME = "ss_session";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -57,6 +57,28 @@ async function resetIfNewDay(user: User): Promise<User> {
   return user;
 }
 
+async function downgradeIfExpired(user: User): Promise<User> {
+  if (user.isPremium && user.premiumUntil && new Date(user.premiumUntil).getTime() <= Date.now()) {
+    const [updated] = await db
+      .update(usersTable)
+      .set({ isPremium: false })
+      .where(eq(usersTable.id, user.id))
+      .returning();
+    return updated;
+  }
+  return user;
+}
+
+export function setSessionCookie(res: Response, userId: number): void {
+  res.cookie(COOKIE_NAME, sign(String(userId)), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+    path: "/",
+  });
+}
+
 export async function sessionMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const cookie = req.cookies?.[COOKIE_NAME] as string | undefined;
@@ -69,24 +91,20 @@ export async function sessionMiddleware(req: Request, res: Response, next: NextF
       }
     }
 
-    let user: User | undefined;
-    if (userId !== null) {
-      const rows = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-      user = rows[0];
+    if (userId === null) {
+      res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+      return;
     }
+
+    const rows = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    let user = rows[0];
 
     if (!user) {
-      const [created] = await db.insert(usersTable).values({}).returning();
-      user = created;
-      res.cookie(COOKIE_NAME, sign(String(user.id)), {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 24 * 365,
-        path: "/",
-      });
+      res.status(401).json({ error: "Session expired. Please sign in again.", code: "SESSION_EXPIRED" });
+      return;
     }
 
+    user = await downgradeIfExpired(user);
     user = await resetIfNewDay(user);
     req.user = user;
     next();

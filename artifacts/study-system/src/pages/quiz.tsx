@@ -33,6 +33,7 @@ export default function QuizPage() {
 
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const answersRef = useRef<Record<string, string>>({});
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
@@ -59,6 +60,7 @@ export default function QuizPage() {
         onSuccess: (quiz) => {
           setActiveQuiz(quiz);
           setAnswers({});
+          answersRef.current = {};
           setCurrentQuestionIdx(0);
           setTimeLeft(quiz.timeMinutes * 60);
           setState("running");
@@ -98,7 +100,7 @@ export default function QuizPage() {
           difficulty: quizToSubmit.difficulty,
           questionType: quizToSubmit.questionType,
           questions: quizToSubmit.questions,
-          answers: Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer })),
+          answers: Object.entries(answersRef.current).map(([questionId, answer]) => ({ questionId, answer })),
         },
       },
       {
@@ -285,7 +287,7 @@ export default function QuizPage() {
                       <button
                         key={i}
                         className={`w-full text-left p-4 rounded-xl border transition-all text-sm ${answers[activeQuiz.questions[currentQuestionIdx].id] === opt ? "bg-primary/10 border-primary font-medium ring-1 ring-primary/30" : "bg-background border-border hover:border-primary/40 hover:bg-accent/50"}`}
-                        onClick={() => setAnswers((prev) => ({ ...prev, [activeQuiz.questions[currentQuestionIdx].id]: opt }))}
+                        onClick={() => { const id = activeQuiz.questions[currentQuestionIdx].id; const next = { ...answersRef.current, [id]: opt }; answersRef.current = next; setAnswers(next); }}
                       >
                         <span className="text-muted-foreground font-mono mr-2 text-xs">{String.fromCharCode(65 + i)}.</span>{opt}
                       </button>
@@ -296,7 +298,7 @@ export default function QuizPage() {
                     className="min-h-[150px] text-base p-4"
                     placeholder="Type your answer here..."
                     value={answers[activeQuiz.questions[currentQuestionIdx]?.id] || ""}
-                    onChange={(e) => setAnswers((prev) => ({ ...prev, [activeQuiz.questions[currentQuestionIdx].id]: e.target.value }))}
+                    onChange={(e) => { const id = activeQuiz.questions[currentQuestionIdx].id; const next = { ...answersRef.current, [id]: e.target.value }; answersRef.current = next; setAnswers(next); }}
                   />
                 )}
               </div>

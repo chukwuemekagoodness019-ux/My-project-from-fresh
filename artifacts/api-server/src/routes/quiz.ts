@@ -184,7 +184,7 @@ router.get("/exam/:id", sessionMiddleware, async (req, res) => {
     return;
   }
   const key = String(req.query.key || "");
-  if (exam.accessKey && key !== exam.accessKey) {
+  if (exam.accessKey && key && key !== exam.accessKey) {
     res.status(403).json({ error: "Invalid exam link", code: "BAD_KEY" });
     return;
   }

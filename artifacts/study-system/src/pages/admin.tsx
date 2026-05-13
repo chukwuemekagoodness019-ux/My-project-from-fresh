@@ -12,6 +12,8 @@ const BASE = import.meta.env.BASE_URL as string;
 
 type AdminUser = {
   id: number;
+  email: string | null;
+  displayName: string | null;
   isPremium: boolean;
   premiumUntil: string | null;
   messagesUsedToday: number;
@@ -623,14 +625,18 @@ export default function AdminPage() {
                 <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-background rounded-lg border border-border">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">User #{u.id}</span>
+                      <span className="font-medium text-sm">{u.displayName || u.email || `User #${u.id}`}</span>
                       {u.isPremium ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/30">✦ Premium</span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">Free</span>
                       )}
                     </div>
+                    {u.email && u.displayName && (
+                      <div className="text-xs text-muted-foreground">{u.email}</div>
+                    )}
                     <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
+                      <span>ID #{u.id}</span>
                       <span>💬 {u.messagesUsedToday} msgs</span>
                       <span>📝 {u.quizzesUsedToday} quizzes</span>
                       <span>🔥 {u.currentStreak} streak</span>

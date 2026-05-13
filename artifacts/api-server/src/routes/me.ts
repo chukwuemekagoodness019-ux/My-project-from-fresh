@@ -8,6 +8,8 @@ router.get("/me", sessionMiddleware, (req, res) => {
   const premium = isPremiumActive(u);
   res.json({
     id: u.id,
+    email: u.email ?? null,
+    displayName: u.displayName ?? null,
     isPremium: premium,
     premiumUntil: u.premiumUntil ? u.premiumUntil.toISOString() : null,
     limits: {

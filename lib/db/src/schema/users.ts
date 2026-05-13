@@ -2,7 +2,11 @@ import { pgTable, serial, text, integer, timestamp, boolean, date } from "drizzl
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
+  email: text("email").unique(),
+  passwordHash: text("password_hash"),
+  displayName: text("display_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  lastActiveAt: timestamp("last_active_at", { withTimezone: true }).defaultNow(),
   isPremium: boolean("is_premium").default(false).notNull(),
   premiumUntil: timestamp("premium_until", { withTimezone: true }),
   messagesUsedToday: integer("messages_used_today").default(0).notNull(),

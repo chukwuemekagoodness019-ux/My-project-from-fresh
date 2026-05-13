@@ -44,7 +44,7 @@ router.get("/admin/summary", async (_req, res, next) => {
 router.get("/admin/users", async (_req, res, next) => {
   try {
     const rows = await db.select().from(usersTable).orderBy(desc(usersTable.createdAt)).limit(500);
-    res.json(rows.map((u) => ({ id: u.id, createdAt: u.createdAt.toISOString(), isPremium: u.isPremium, premiumUntil: u.premiumUntil ? u.premiumUntil.toISOString() : null, messagesUsedToday: u.messagesUsedToday, quizzesUsedToday: u.quizzesUsedToday, currentStreak: u.currentStreak, bestStreak: u.bestStreak, bestScore: u.bestScore })));
+    res.json(rows.map((u) => ({ id: u.id, email: u.email ?? null, displayName: u.displayName ?? null, createdAt: u.createdAt.toISOString(), isPremium: u.isPremium, premiumUntil: u.premiumUntil ? u.premiumUntil.toISOString() : null, messagesUsedToday: u.messagesUsedToday, quizzesUsedToday: u.quizzesUsedToday, currentStreak: u.currentStreak, bestStreak: u.bestStreak, bestScore: u.bestScore })));
   } catch (e) {
     next(e);
   }

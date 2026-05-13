@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,6 +14,9 @@ import ChatPage from "@/pages/chat";
 import QuizPage from "@/pages/quiz";
 import ExamPage from "@/pages/exam";
 import AdminPage from "@/pages/admin";
+import AuthPage from "@/pages/auth";
+
+const BASE = import.meta.env.BASE_URL as string;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,22 +29,46 @@ const queryClient = new QueryClient({
 
 function AppRoutes() {
   const [location] = useLocation();
-  const isAdmin = location === "/admin";
+  const isAdmin = location === "/system-core";
   return (
     <>
-      {/* Announcement: visible on all pages EXCEPT the admin panel */}
       {!isAdmin && <AnnouncementBanner />}
       <Switch>
         <Route path="/" component={ChatPage} />
         <Route path="/quiz" component={QuizPage} />
         <Route path="/exam" component={ExamPage} />
-        <Route path="/admin" component={AdminPage} />
+        <Route path="/system-core" component={AdminPage} />
         <Route component={NotFound} />
       </Switch>
-      {/* Floating feedback — hidden on chat page (feedback lives in the + menu there) */}
       {location !== "/" && !isAdmin && <FeedbackButton />}
     </>
   );
+}
+
+type AuthState = "loading" | "authed" | "unauthed";
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const [auth, setAuth] = useState<AuthState>("loading");
+
+  useEffect(() => {
+    fetch(`${BASE}api/me`, { credentials: "include" })
+      .then((res) => setAuth(res.ok ? "authed" : "unauthed"))
+      .catch(() => setAuth("unauthed"));
+  }, []);
+
+  if (auth === "loading") {
+    return (
+      <div className="min-h-[100dvh] bg-background flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (auth === "unauthed") {
+    return <AuthPage />;
+  }
+
+  return <>{children}</>;
 }
 
 function App() {
@@ -49,10 +77,12 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ChatHistoryProvider>
-            <MotivationalSplash />
             <OfflineBanner />
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <AppRoutes />
+              <AuthGate>
+                <MotivationalSplash />
+                <AppRoutes />
+              </AuthGate>
             </WouterRouter>
             <Toaster />
           </ChatHistoryProvider>

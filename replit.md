@@ -36,18 +36,25 @@ A full-stack AI-powered study assistant with chat, quiz, exam, and admin feature
 
 ## Architecture decisions
 
+- **Auth**: Users register/login with email + password (Node crypto.scrypt hashing). Session is cookie-based HMAC-signed. Existing anonymous users (with cookies) are grandfathered. New users must register. Auth routes: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`.
+- **Auth gate**: App.tsx AuthGate makes a single `GET /api/me` check on load. If 401 → show register/login page. If ok → show app. No TanStack Query retries — direct fetch for instant response.
+- **Premium lifecycle**: Session middleware auto-downgrades `isPremium=false` in DB when `premiumUntil` has expired. No stale premium counts.
 - Chat history is localStorage-only (7-day TTL) — no server-side conversation persistence; `conversations` and `messages` DB tables exist but are unused
 - Feature flags, exam store, announcements, and error log are all in-memory (intentionally — lightweight, no DB needed)
 - Admin auth is triple-factor (email + secretKey + password) with 4h in-memory token TTL
 - AI provider fallback chain: OpenRouter → OpenAI → DeepSeek — configured via `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`
 - Session identity is cookie-based HMAC-signed (no external auth library)
+- Quiz/Exam auto-submit uses `answersRef` (mirrors state) to avoid stale closure bug when timer fires
+- Exam join: code-only (access key is optional — links include key for security, but code-only join is also supported)
+- Chat input: Enter = newline, Ctrl+Enter / Cmd+Enter = send
 
 ## Product
 
+- **Auth** (gate): Email + password register/login before accessing the app
 - **Chat** (`/`): SSE-streaming AI chat with sidebar history (localStorage), file uploads (image/PDF), voice input, feedback button
 - **Quiz** (`/quiz`): AI-generated multiple-choice quizzes by subject, scored and saved to DB
 - **Exam** (`/exam`): Timed exam mode with in-memory exam store (survives until server restart)
-- **Admin** (`/admin`): Manage users, payments, feature flags, announcements, error logs — triple-auth protected
+- **Admin** (`/system-core`): Manage users (with email), payments, feature flags, announcements, error logs — triple-auth protected
 
 ## User preferences
 
