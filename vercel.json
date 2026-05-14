@@ -1,7 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd artifacts/study-system && pnpm run build",
+  "buildCommand": "pnpm install --frozen-lockfile && cd artifacts/study-system && pnpm run build",
   "outputDirectory": "artifacts/study-system/dist/public",
+  "installCommand": "pnpm install --frozen-lockfile",
   "rewrites": [
     {
       "source": "/(.*)",
