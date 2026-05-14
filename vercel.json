@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "cd artifacts/study-system && pnpm run build",
+  "outputDirectory": "artifacts/study-system/dist/public",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "PORT": "3000",
+    "BASE_PATH": "/",
+    "NODE_ENV": "production"
+  }
+}
