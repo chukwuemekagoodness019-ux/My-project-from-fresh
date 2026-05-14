@@ -1,10 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from "@taileshwindcss/vite";
 import path from "path";
 
-// Use provided env vars or defaults for production
-const rawPort = process.env.PORT || "5173";
+// Use provided env vars with production defaults
+const rawPort = process.env.PORT || "3000";
 const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
