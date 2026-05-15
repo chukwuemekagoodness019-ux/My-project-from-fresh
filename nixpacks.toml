@@ -1,0 +1,21 @@
+# Nixpacks configuration for Railway deployment
+# Optimized for monorepo with pnpm workspaces
+
+[build]
+# Use Node.js 24 LTS and pnpm
+cmds = [
+  "pnpm install --frozen-lockfile",
+  "pnpm run build",
+  "pnpm run typecheck"
+]
+
+[start]
+# Start the API server built from artifacts/api-server
+cmd = "node --enable-source-maps ./artifacts/api-server/dist/index.mjs"
+
+[[providers]]
+name = "node"
+
+[providers.node]
+# Node.js 24 LTS
+nixpkgs = ["nodejs_24"]
